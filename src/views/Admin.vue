@@ -142,11 +142,27 @@
               <h6>
                 Download Office Stats
               </h6>
-              
+
+              <span>
+                <small><i>
+                  <span
+                    style="cursor: pointer;"
+                    @click="setOfficeFilterForAllRegionsForDownload(true);"
+                  >All</span>
+                </i></small>
+                |
+                <small><i>
+                  <span
+                    style="cursor: pointer;"
+                    @click="setOfficeFilterForAllRegionsForDownload(false);"
+                  >None</span>
+                </i></small>
+              </span>
+
               <div class="row overflow-auto mx-0" style="height:400px">
                 <div class="col">
-                  <div v-for="region in regionsForOfcStats" :key="region.name">
-                    
+                  <div v-for="region in regionsForDownloadSelections" :key="region.name">
+
                     <div class="pt-2">
                       <i class="fas fa-angle-right"></i>
                       {{ region.name }}
@@ -154,14 +170,14 @@
                         (
                         <span
                           style="cursor: pointer;"
-                          @click="setRegionForOfcStatSelection(region.name, true);"
+                          @click="setRegionForDownloadSelection(region.name, true);"
                         >All</span>
                       </i></small>
                       |
                       <small><i>
                         <span
                           style="cursor: pointer;"
-                          @click="setRegionForOfcStatSelection(region.name, false);"
+                          @click="setRegionForDownloadSelection(region.name, false);"
                         >None</span>
                         )
                       </i></small>
@@ -175,7 +191,7 @@
                   </div>
                 </div>
               </div>
-              
+
             </div>
           </div>
           <div class="modal-footer">
@@ -185,6 +201,92 @@
         </div>
       </div>
     </div>
+
+    <!-- Office Status Updates Download Modal -->
+    <div class="modal fade" id="downloadOfficeStatusUpdatesModal" tabindex="-1" role="dialog" aria-labelledby="downloadOfficeStatusUpdatesLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="downloadOfficeStatusUpdatesLabel">Download Status Updates for Offices</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div>
+              <h6>
+                Download Office Status Updates
+              </h6>
+
+              <span>
+                <small><i>
+                  <span
+                    style="cursor: pointer;"
+                    @click="setOfficeFilterForAllRegionsForDownload(true);"
+                  >All</span>
+                </i></small>
+                |
+                <small><i>
+                  <span
+                    style="cursor: pointer;"
+                    @click="setOfficeFilterForAllRegionsForDownload(false);"
+                  >None</span>
+                </i></small>
+              </span>
+
+              <div class="row overflow-auto mx-0" style="height:400px">
+                <div class="col">
+                  <div v-for="region in regionsForDownloadSelections" :key="region.name">
+
+                    <div class="pt-2">
+                      <i class="fas fa-angle-right"></i>
+                      {{ region.name }}
+                      <small><i>
+                        (
+                        <span
+                          style="cursor: pointer;"
+                          @click="setRegionForDownloadSelection(region.name, true);"
+                        >All</span>
+                      </i></small>
+                      |
+                      <small><i>
+                        <span
+                          style="cursor: pointer;"
+                          @click="setRegionForDownloadSelection(region.name, false);"
+                        >None</span>
+                        )
+                      </i></small>
+                    </div>
+
+                    <div v-for="ofc in region.offices" :key="ofc.LocationName" class="pl-4">
+                      <input class="form-check-input" type="checkbox" v-model="ofc.selected">
+                      {{ofc.LocationName}}
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" @click="downloadOfficeStatusUpdates">Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <md-dialog :md-active.sync="deleteActive">
+      <md-dialog-title>Delete User</md-dialog-title>
+      <md-dialog-content v-if="userToDelete">Are you sure to delete <b>{{userToDelete.name}}</b>?</md-dialog-content>
+
+      <md-dialog-actions>
+        <md-button class="md-primary" @click="deleteActive = false">Close</md-button>
+        <md-button class="md-primary" @click="submitDeleteUser">Save</md-button>
+      </md-dialog-actions>
+    </md-dialog>
 
     <h5 class="text-muted">Admin Dashboard</h5>
 
@@ -203,10 +305,10 @@
 
             <div class="row">
               <div class="col-12 pl-3">
-                <button class="btn btn-outline-secondary" type="button" @click="setOfficeFilterForAll(true); refreshData(true);">
+                <button class="btn btn-outline-secondary" type="button" @click="setOfficeFilterForAllRegionsForFilter(true); refreshData(true);">
                   Select All
                 </button>
-                <button class="btn btn-outline-secondary mx-2" type="button" @click="setOfficeFilterForAll(false); refreshData();">
+                <button class="btn btn-outline-secondary mx-2" type="button" @click="setOfficeFilterForAllRegionsForFilter(false); refreshData();">
                   Select None
                 </button>
               </div>
@@ -218,7 +320,7 @@
               <div class="col">
 
                 <div v-for="region in regions" :key="region.name">
-                  
+
                   <div class="pt-2">
                     <i class="fas fa-angle-right"></i>
                     {{ region.name }}
@@ -245,7 +347,7 @@
                   </div>
 
                 </div>
-                
+
               </div>
             </div>
 
@@ -315,9 +417,9 @@
             </div>
             <div class="input-group-append">
               <span
-                :style="'cursor: ' + (((pageNo) * itemsOnPage >= totalUsersCount) ? 'not-allowed' : 'pointer') "
+                :style="'cursor: ' + (((pageNo) * itemsOnPage >= filteredUsersCount) ? 'not-allowed' : 'pointer') "
                 @click="setPageNo(pageNo+1)"
-                :class="'input-group-text ' + (((pageNo) * itemsOnPage >= totalUsersCount) ? 'disabled' : '') "
+                :class="'input-group-text ' + (((pageNo) * itemsOnPage >= filteredUsersCount) ? 'disabled' : '') "
                 id="pageNav"
               ><i class="fas fa-chevron-right"></i></span>
             </div>
@@ -371,6 +473,9 @@
             </span>
             <span class="dropdown-item" data-toggle="modal" data-target="#downloadOfficeStatsModal">
               Download Office Stats
+            </span>
+            <span class="dropdown-item" data-toggle="modal" data-target="#downloadOfficeStatusUpdatesModal">
+              Download Office Status Updates
             </span>
           </div>
         </div>
@@ -478,6 +583,11 @@
               <i :class="'fas fa-circle ' + user.status.css_key"></i>
             </td>
             <td style="width: 25%">
+              <span class="pr-1" @click="deleteUser(user)">
+                <i class="fas fa-times-circle"></i>
+                <md-tooltip md-direction="top">Delete this user</md-tooltip>
+              </span>
+
               {{ user.name }}
             </td>
             <td style="width: 20%">
@@ -575,11 +685,13 @@ export default {
     };
     oth.offices = uncategorizedLocations.map(l => { return {LocationName: l, selected: true} });
     this.regions.push(oth);
-    this.regionsForOfcStats = JSON.parse(JSON.stringify(this.regions));
+    this.regionsForDownloadSelections = JSON.parse(JSON.stringify(this.regions));
     this.refreshData(true);
   },
   data() {
     return {
+      userToDelete: null,
+      deleteActive: false,
       isLoading: false,
       pageNo: 1,
       itemsOnPage: 10,
@@ -587,9 +699,10 @@ export default {
       sortBy: null,
       sortAsc: true,
       regions: [],
-      regionsForOfcStats: [],
+      regionsForDownloadSelections: [],
       users: [],
       totalUsersCount: 0,
+      filteredUsersCount: 0,
       incubationDays: 2,
       enumStatusMap: enumStatusMap,
       userUpdateData: {
@@ -624,8 +737,26 @@ export default {
     }
   },
   methods: {
+    submitDeleteUser() {
+      this.deleteActive = false;
+
+      const body = {"email": this.userToDelete.email};
+
+      this.$api.post("/api/user/delete", body).then(msg => {
+        if (msg.data) {
+          //remove user from List
+          const userIndex = this.users.findIndex(u => u.email === this.userToDelete.email);
+
+          if (userIndex !== -1) this.users.splice(userIndex, 1);
+        }
+      });
+    },
+    deleteUser(u) {
+      this.deleteActive = true;
+      this.userToDelete = u;
+    },
     async downloadGraphForSelectedAsCSV() {
-      let userEmails = this.users.filter(u => u.selected).map(u => u.email);  
+      let userEmails = this.users.filter(u => u.selected).map(u => u.email);
       if (userEmails.length < 1) return;
       this.isLoading = true;
       let postBody = {
@@ -654,17 +785,41 @@ export default {
     },
     async downloadOfficeStats() {
       let selectedLocations = [];
-      this.regionsForOfcStats.forEach(r => {
+      this.regionsForDownloadSelections.forEach(r => {
         selectedLocations = selectedLocations.concat(r.offices.filter(o => o.selected).map(o => o.LocationName));
       });
       let postData = {
         selectedLocations: selectedLocations
       };
-      let csv = "Office,Green,Orange,Red,Total\n";
       let resp = await this.$api.post("/api/admin/get-office-stats", postData);
       let data = resp.data;
+      let csv = "Office,Green,Orange,Red,Total\n";
       data.forEach(d => { csv += `${d.office},${d.stats.green},${d.stats.orange},${d.stats.red},${d.stats.total}\n`; });
       downloadCSV(csv, `office-stats_${new Date().toLocaleDateString()}:${new Date().getHours()}:${new Date().getMinutes()}.csv`);
+    },
+    async downloadOfficeStatusUpdates() {
+      let selectedLocations = [];
+      this.regionsForDownloadSelections.forEach(r => {
+        selectedLocations = selectedLocations.concat(r.offices.filter(o => o.selected).map(o => o.LocationName));
+      });
+      let postData = {
+        selectedLocations: selectedLocations
+      };
+      let resp = await this.$api.post("/api/admin/get-office-status-updates", postData);
+      let reports = resp.data;
+      let csv = "";
+      for(let report of reports) {
+        csv += `Office,${report.office}\n`;
+        csv += `Date,${new Date().toLocaleDateString()}\n`;
+        csv += `Cuttoff Days,7\n`;
+        csv += `Name,Email,Status,Last Updated\n`;
+        for(let u of report.users) {
+          let status = enumStatusMap.filter(s => s.code === u.status.status)[0];
+          csv += `${u.name},${u.email},${status.label},${u.status.date}\n`;
+        }
+        csv += '\n';
+      }
+      downloadCSV(csv, `office-status-reports_${new Date().toLocaleDateString()}:${new Date().getHours()}:${new Date().getMinutes()}.csv`);
     },
     async refreshData(ignoreOfcFilters) {
 
@@ -691,7 +846,8 @@ export default {
       };
 
       let userData = await this.$api.post('/api/admin/get-users-by-filters', postData);
-      let users = userData.data;
+      this.filteredUsersCount = userData.data.filteredCount;
+      let users = userData.data.users;
 
 
       this.users = users.map(u => {
@@ -739,7 +895,7 @@ export default {
       $(function () {
         $('#updateConfModal').modal('hide');
       });
-      
+
       this.isLoading = false;
 
     },
@@ -762,7 +918,10 @@ export default {
       });
     },
     async setPageNo(newNo) {
-      if (newNo < 1 || ((newNo-1) * this.itemsOnPage) > this.totalUsersCount) return;
+      let nxtNo = newNo-1;
+      if (nxtNo < 0) return;
+      if (((this.pageNo * this.itemsOnPage) <= this.filteredUsersCount) &&
+          ((nxtNo * this.itemsOnPage) > this.filteredUsersCount)) return;
       this.pageNo = parseInt(newNo);
       await this.refreshData();
     },
@@ -774,12 +933,17 @@ export default {
     setRegionSelection(name, val) {
       this.regions.filter(r => r.name === name)[0].offices.forEach(o => o.selected = val);
     },
-    setRegionForOfcStatSelection(name, val) {
-      this.regionsForOfcStats.filter(r => r.name === name)[0].offices.forEach(o => o.selected = val);
-    },
-    setOfficeFilterForAll(val) {
+    setOfficeFilterForAllRegionsForFilter(val) {
       this.regions.forEach(r => {
         this.setRegionSelection(r.name, val);
+      });
+    },
+    setRegionForDownloadSelection(name, val) {
+      this.regionsForDownloadSelections.filter(r => r.name === name)[0].offices.forEach(o => o.selected = val);
+    },
+    setOfficeFilterForAllRegionsForDownload(val) {
+      this.regionsForDownloadSelections.forEach(r => {
+        this.setRegionForDownloadSelection(r.name, val);
       });
     }
   }

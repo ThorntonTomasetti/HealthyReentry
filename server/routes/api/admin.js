@@ -71,8 +71,6 @@ router.post("/get-users-by-filters", async function(req, res) {
   let nameSearch = req.body.nameSearch;
   let offices = req.body.offices;
 
-  const ret = [];
-
   let include = {
     "_id": 1,
     "dateOfConsent": 1,
@@ -81,6 +79,14 @@ router.post("/get-users-by-filters", async function(req, res) {
     "location": 1
   };
 
+  let filteredCountQuery = !Array.isArray(offices)
+                          ? User.count({ name: {'$regex': nameSearch, '$options': 'i'} })
+                          : User.count({
+                              name: {'$regex': nameSearch, '$options': 'i'},
+                              location: {$in: offices}
+                            });
+  let filteredCount = await filteredCountQuery.exec();
+
   let findQuery = !Array.isArray(offices)
                 ? User.find({ name: {'$regex': nameSearch, '$options': 'i'} }, include)
                 : User.find({
@@ -88,22 +94,28 @@ router.post("/get-users-by-filters", async function(req, res) {
                     location: {$in: offices}
                   }, include);
 
-  const users = await findQuery
-                      .sort({ name: 1})
-                      .skip(skip)
-                      .limit(limit)
-                      .exec();
+  const dbUsers = await findQuery
+                        .sort({ name: 1})
+                        .skip(skip)
+                        .limit(limit)
+                        .exec();
 
-  for(let u of users) {
+  let users = [];
+  for(let u of dbUsers) {
     let nu = u.toObject();
     const st = await Status.find({ "user": nu._id })
                            .sort({ date: -1 })
                            .limit(1);
     nu.status = st[0];
-    ret.push(nu)
+    users.push(nu)
   }
 
-  ret.reverse();
+  users.reverse();
+
+  let ret = {
+    users: users,
+    filteredCount: filteredCount
+  };
 
   res.json(ret);
 
@@ -145,6 +157,28 @@ router.get("/get-uncategorized-offices", async function(req, res) {
 });
 
 
+/**
+ * @swagger
+ * path:
+ *  /api/admin/get-office-stats:
+ *    post:
+ *      summary: Get counts of total red, orange and green reports from office locations.
+ *      tags: [Admin]
+ *      parameters:
+ *        - in: body
+ *          name: selectedLocations
+ *          description: Array of offices to make the selections for.
+ *          schema:
+ *            type: Array
+ *            example: ["New York", "Mumbai", "Chicago"]
+ *      produces:
+ *       - application/json:
+ *      responses:
+ *        200:
+ *          description: Returns counts of total red, orange and green reports from office locations.
+ *        500:
+ *          description: Server error.
+ */
 router.post("/get-office-stats", async function(req, res) {
   let offices = req.body.selectedLocations;
 
@@ -172,6 +206,65 @@ router.post("/get-office-stats", async function(req, res) {
       stats: stats
     };
     ret.push(officeStats);
+  }
+
+  return res.json(ret);
+});
+
+
+/**
+ * @swagger
+ * path:
+ *  /api/admin/get-office-status-updates:
+ *    post:
+ *      summary: Get list of users who havn't updated their status in the last 7 days.
+ *      tags: [Admin]
+ *      parameters:
+ *        - in: body
+ *          name: selectedLocations
+ *          description: Array of offices to make the selections for.
+ *          schema:
+ *            type: Array
+ *            example: ["New York", "Mumbai", "Chicago"]
+ *      produces:
+ *       - application/json:
+ *      responses:
+ *        200:
+ *          description: Returns office-wise list of users who haven't updated their statuses in last 7 days.
+ *        500:
+ *          description: Server error.
+ */
+router.post("/get-office-status-updates", async function(req, res) {
+  let offices = req.body.selectedLocations;
+
+  let include = {
+    "_id": 1,
+    "name": 1,
+    "email": 1
+  };
+
+  let ret = [];
+  let d = new Date();
+  d.setHours(0,0,0,0);
+  let cutoffDate = d.setDate(d.getDate() - 7);
+
+  for(let o of offices) {
+    let allUsers = await User.find({ location: o }, include).exec();
+    let unreportedUsers = [];
+    for(let u of allUsers) {
+      let st = (await Status.find({ "user": u._id })
+                            .sort({ date: -1 })
+                            .limit(1))[0];
+      if (st.date < cutoffDate) {
+        let user = u.toObject();
+        user.status = st;
+        unreportedUsers.push(user);
+      }
+    }
+    ret.push({
+      office: o,
+      users: unreportedUsers
+    });
   }
 
   return res.json(ret);

@@ -80,6 +80,13 @@ MongoClient.connect(url, {
 }).then(function (db) {
     console.log("CONNECTED TO DB");
 
+    var today = new Date();
+    if (today.getDay() == 5) console.log("today is friday");
+    else {
+        console.log("today is not friday yet!")
+        db.close();
+        return;
+    }
 
     getUsers(db).then(function () {
         //console.log("allUsers", allUsers);
@@ -132,6 +139,7 @@ MongoClient.connect(url, {
     })
 
 }).catch(err => {
+    db.close();
     console.error("An error occurred reading the database.");
     console.error(err);
 });
@@ -173,6 +181,7 @@ function getUsers(client_db) {
             function isDone() {
                 counter += 1;
                 if (users.length === counter) {
+                    client_db.close();
                     resolve(true);
                 }
             }
@@ -200,7 +209,7 @@ function sendEmail(toEmail, location, attachment, attachment2, attachment3) {
     if (attachment) {
         mailOptions.attachments = [{
                 "content": attachment,
-                "filename": "Employees Who Signed up.csv",
+                "filename": "Employees Who Have Signed up.csv",
                 "type": "text/csv"
             },
             {
