@@ -185,6 +185,7 @@ function sendEmail(subject, toEmails, content, attachment, filename) {
         "type": "text/csv"
       }]
     };
+    console.log("mailOptions", mailOptions);
 
     // https://www.twilio.com/blog/sending-bulk-emails-3-ways-sendgrid-nodejs
     // the recepients not able to see each other
