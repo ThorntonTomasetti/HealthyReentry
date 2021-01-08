@@ -171,6 +171,8 @@ function sendEmail(subject, toEmails, content, attachment, filename) {
       text: " ",
       html: content
     };
+    
+    console.log("mailOptions", mailOptions);
 
     if (attachment) {
       mailOptions.attachments = [{
