@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
+const helmet = require("helmet");
+
 const DIR = 'dist';
 const PORT = process.env.PORT || 8080;
 
@@ -33,6 +35,20 @@ function ensureSecure(req, res, next) {
 //attach middleware to app
 app.use('*', ensureSecure);
 
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://forms.gle/1NihixR6mueJdiEt7","https://code.jquery.com/ui/1.10.4/jquery-ui.js"],
+      connectSrc: ["'self'","https://s3.amazonaws.com/corewebsite-media-uploads", "https://s3.amazonaws.com/core-thread/", "https://s3-us-west-2.amazonaws.com/core-weblibrary/libraries/core-logo.svg.html","https://www.google-analytics.com", "https://core-studio.gitbook.io/thread"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://use.fontawesome.com","https://code.jquery.com"],
+      imgSrc: ["'self'", "https://*", "data:"],
+      scriptSrcAttr: ["'unsafe-hashes'", "'unsafe-inline'"],
+      frameAncestors: [
+          "self",
+          "https://spark.thorntontomasetti.com"
+      ]
+    },
+  }));
 
 
 app.use(express.static(DIR));
