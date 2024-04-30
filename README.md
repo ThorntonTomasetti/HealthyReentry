@@ -1,9 +1,14 @@
-# Healthy Reentry
+
+
+
+
+# Healthy Reentry *
+<mark>\* ***The project is no longer being maintained*** <mark>
 
 Healthy Reentry is a web app to track in-person encounters within an organization. Members of the organization can use their mobile devices or computers to securely track interpersonal encounters, and share their current [COVID-19] status with designated members of the Talent Team. The app keeps track of the contacts and alerts members if they may have been exposed to risk.  
 
 ## Heroku Demo Site
-https://healthyreentry-dev.herokuapp.com/
+...
 
 ## Screenshots
 **Home Page**  
